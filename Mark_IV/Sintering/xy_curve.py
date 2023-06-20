@@ -10,8 +10,8 @@ from yMove import yMove
 
 ls = limitSwitches()
 
-def xyCurve(x_dist=0, y_dist=0, x_circle=0, y_circle=3, rotation=True):
-    speed_mod = 1
+def xyCurve(x_dist=0, y_dist=0, x_circle=0, y_circle=2, rotation=True):
+    speed_mod = 0.1 #ideal speed mod is 0.1
     x_prev = 0
     y_prev = 0
     x = 0
