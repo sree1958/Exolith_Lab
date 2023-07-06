@@ -1,12 +1,10 @@
 import RPi.GPIO as GPIO
 import time
 from datetime import date, datetime
-# import pytz
 import arrow
 from GPS import GPS_Data
-import smbus
 from Logging import logger
-from axisReset import axis_reset
+import axisReset
 from sensorGroup import sensor_group
 import os
 from dotenv import load_dotenv
@@ -21,7 +19,7 @@ gps = GPS_Data()
 
 
 def axisResets():
-    ar = axis_reset()
+    ar = axisReset.axis_reset()
     xy_status = False
     ev_status = False
 
@@ -39,8 +37,8 @@ def axisResets():
     else:
         logger.logInfo("Axis Reset Failure")
         logger.logInfo(
-            "x_axis_status: {} \ny_axis_status: {} \nev_status: {}".format(
-                xy_status, xy_status, ev_status
+            "xy_axis_status: {}\nev_status: {}".format(
+                xy_status, ev_status
             )
         )
         return False
@@ -72,7 +70,7 @@ def sensorGroupCheck():
 
 
 def solarElevationLogic():
-    if(bool(os.getenv("useGPS"))):
+    if(os.getenv("useGPS") == "True"):
         gps_dict = gps.getCurrentCoordinates()
     else:
         gps_dict = gps.userDefinedCoordinates()
@@ -89,15 +87,12 @@ def solarElevationLogic():
     location = (gps_dict["Lattitude"], longitude)
     when = (year, month, day, int(hour), int(minutes), int(seconds), 0)
 
-    # tz_NY = pytz.timezone("America/New_York")
-    # datetime_NY = datetime.now(tz_NY)
     tz_NY = arrow.now().to('America/New_York').tzinfo
     datetime_NY = datetime.now(tz_NY)
 
     azimuth, elevation = elevation_tracker.sunpos(when, location, True)
 
     logger.logInfo("Current UTC: {}".format(now))
-    #Need to fix#logger.logInfo(("EST timezone: {}:{}:{}".format(hour, minutes, seconds)))
 
     status = elevation_tracker.solarElevationPositioning(elevation)
 
@@ -108,9 +103,7 @@ def azimuthLogic():
     azimuth_status = False
 
     try:
-        azimuth_tracker.stepMovement(1, 100)
-        time.sleep(1)
-        azimuth_tracker.stepMovement(0, 100)
+        azimuth_tracker.stepMovement(1, int(os.getenv("AZIMUTH_Steps")))
         uvMax = azimuth_tracker.maxValue()
         azimuth_status = azimuth_tracker.azimuthPositioning(uvMax)
         return azimuth_status
@@ -126,7 +119,7 @@ def solarTracking():
     while True:
         azimuth_tracking_status = azimuth_tracker.tracking()
         solar_elevation_status = solarElevationLogic()
-        time.sleep(10)  # sleep for 10 seconds before checking positioning
+        time.sleep(20)  # sleep for 10 seconds before checking positioning
 
 
 def main():

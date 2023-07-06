@@ -86,12 +86,15 @@ def xMove(distance=6, clockwise=True, speed_mod=0.1):
                 if timer > seconds:
                     break
 
-                if GPIO.input(motor2_switch) == 0 or GPIO.input(motor1_switch) == 0:
+                if (GPIO.input(motor2_switch) == 0 or GPIO.input(motor1_switch) == 0) and clockwise == False:
                     motor_flag += 1
                 else:
                     motor_flag = 0
 
                 if motor_flag >= 5:
+                    break
+
+            if motor_flag >= 5:
                     break
         GPIO.cleanup()
 

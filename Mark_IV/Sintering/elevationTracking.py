@@ -1,4 +1,5 @@
 import time
+import sys
 import math
 from Kalman import KalmanAngle
 import smbus
@@ -7,6 +8,7 @@ from time import sleep
 from Logging import logger
 from dotenv import load_dotenv
 import os
+import inspect
 
 # Load environment variables from .env file
 load_dotenv()
@@ -125,19 +127,27 @@ class elevation_tracker:
         CCW = 0
 
         # Should be set by user, either via flag or direct input
-        accuracy = 1.5
+        accuracy = 1
+        degOffset = 2.7
 
         # Setup pin layout on RPI
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(DIR, GPIO.OUT)
         GPIO.setup(STEP, GPIO.OUT)
 
-        time.sleep(1)
+        # GPIO.output(DIR, CW)
+
+        # for x in range(1000):
+        #     GPIO.output(STEP, GPIO.HIGH)
+        #     sleep(0.02)  # Dictates how fast stepper motor will run
+        #     GPIO.output(STEP, GPIO.LOW)
+
+        # time.sleep(1)
 
         currentTiltAngleX, currentTiltAngleY = self.tiltAngle()
 
         # Gathering current tilt angle from sensor
-        currentTiltAngleX = 90 - (float(currentTiltAngleX) * (-1))
+        currentTiltAngleX = 90 - (float(currentTiltAngleX) * (-1)) - degOffset
 
         self.logger.logInfo(
             "Current Tilt Elevation Angle: {}".format(currentTiltAngleX)
@@ -162,19 +172,18 @@ class elevation_tracker:
                 if degreeDifferenceX > 0:
                     GPIO.output(DIR, CW)
                 else:
-                    sleep(1.0)
                     GPIO.output(DIR, CCW)
 
                 for x in range(int(degreeDev)):
                     GPIO.output(STEP, GPIO.HIGH)
-                    sleep(0.05)  # Dictates how fast stepper motor will run
+                    sleep(0.2)  # Dictates how fast stepper motor will run
                     GPIO.output(STEP, GPIO.LOW)
 
                 time.sleep(1)
 
                 # New Angle Readings
                 currentTiltAngleX, currentTiltAngleY = self.tiltAngle()
-                currentTiltAngleX = 90 - (float(currentTiltAngleX) * (-1))
+                currentTiltAngleX = 90 - (float(currentTiltAngleX) * (-1)) - degOffset
                 self.logger.logInfo("Lens Tilt angle: {}".format(currentTiltAngleX))
                 self.logger.logInfo("Solar Elevation: {}".format(elevation))
 

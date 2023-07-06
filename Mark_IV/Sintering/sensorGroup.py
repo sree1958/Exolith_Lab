@@ -1,4 +1,3 @@
-import time
 import smbus
 import board
 import adafruit_ltr390
